@@ -1,0 +1,14 @@
+#minefield {
+  border: 1px solid black;
+  display: inline-block;
+}
+
+.tile {
+  stroke: black;
+  fill: white;
+}
+
+.tileRevealed {
+  stroke:black;
+  fill: grey;
+}

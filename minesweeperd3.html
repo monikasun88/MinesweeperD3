@@ -1,0 +1,27 @@
+<html>
+<head>
+  <link rel='stylesheet' href='minesweeperd3.css' type="text/css"/>
+</head>
+<body>
+  <h1>
+
+  </h1>
+
+  <select id="difficulty" name="difficulty">
+    <option value='beginner' selected='selected'>Beginner</option>
+    <option value='intermediate'>Intermediate</option>
+    <option value='advanced'>Advanced</option>
+    <option value='custom'>Custom</option>
+  </select>
+  <div id="customgameopts"></div>
+  <input type="submit" value="New Game">
+  <input type="submit" value="Replay">
+
+  <br>
+  <div id="minefield"></div>
+  <div id="minecounter"></div>
+
+  <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+  <script src="minesweeperd3.js"></script>
+</body>
+</html>
