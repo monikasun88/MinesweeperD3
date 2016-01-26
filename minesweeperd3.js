@@ -56,12 +56,15 @@ var minefield = d3.select("#minefield")
   .attr("width", tileSize * (xTiles + 2))
   .attr("height", tileSize * (yTiles + 2));
 
-var mineTiles = minefield.append('g');
+// var mineTiles = minefield.append('g');
 
-var tiles = mineTiles.selectAll('rect')
+var tiles = minefield.selectAll('rect')
   .data(test)
   .enter()
   .append('rect')
+  .attr('class', function(d) {
+    return (d.reveal ? 'tileRevealed' : 'tile')
+  })
   .attr('width', tileSize)
   .attr('height', tileSize)
   .attr('x', function(d) {
@@ -70,21 +73,21 @@ var tiles = mineTiles.selectAll('rect')
   .attr('y', function(d) {
     return d.y * tileSize;
   })
-  .attr('class', 'tile')
   .on('mouseover', function(d) console.log(d))
   .on('click', function(d, i) {
     test.forEach(function(a) {
-      if (a.index-1 === i) {
-        a.reveal = a.reveal ? false : true
+      if (a.index-1 === i && !a.reveal) {
+        a.reveal = true
       }
     })
     var tile = d3.select(this);
-    tile.attr('class', (tile.attr('class') === 'tileRevealed') ? 'tile' : 'tileRevealed')
-    newMineMat = leftClickLogic(i, test, xTiles, yTiles)
-    updateTileGrid(newMineMat)
+    tile.attr('class', 'tileRevealed')
+    leftClickLogic(i, test, gameOver, xTiles, yTiles)
+    updateTileGrid(test)
+    updateTextGrid(test)
   })
 
-var mineText = mineTiles.selectAll('text')
+var mineText = minefield.selectAll('text')
   .data(test)
   .enter()
   .append('g')
@@ -92,7 +95,7 @@ var mineText = mineTiles.selectAll('text')
 mineText.append("text")
   .each(function(d, i) {
       d3.select(this).append("tspan")
-        .text(d.value)
+        .text(function(d) {return d.reveal ? (d.value == 0 ? null : d.value) : null})
         .attr("x", d.x * tileSize + tileSize/2)
         .attr("y", d.y * tileSize + tileSize*2/3)
         .attr("fill", function(d){
@@ -103,18 +106,28 @@ mineText.append("text")
         .attr("font-size", "14px")
         .attr("font-weight", "bold")
         .attr("text-anchor","middle")
+  })
+  .on('click', function(d, i) {
+    test.forEach(function(a) {
+      if (a.index-1 === i && !a.reveal) {
+        a.reveal = true
+      }
+    })
+    var tile = d3.select(this);
+    tile.attr('class', 'tileRevealed')
+    leftClickLogic(i, test, gameOver, xTiles, yTiles)
+    updateTileGrid(test)
+    updateTextGrid(test)
   });
 
 // Left click logic
 function leftClickLogic(tileInd, mineM, gameOver, xT, yT) {
   tile = mineM[tileInd]
-
   if (tile.value < 0) {
     gameOver = true
-  } else if (tile.value > 0) {
-    mineM = calcRevealAreas(tileInd, mineM, xT, yT)
+  } else {
+    calcRevealAreas(tileInd, mineM, xT, yT)
   }
-  return mineM
 }
 
 // Shift left-click logic
@@ -233,7 +246,6 @@ function calcRevealAreasWrong(mines, xT, yT) {
 
 // FUNCTION v2: On click, reveals a certain number of squares.  The traditional algorithm is that it looks recursively at revealed tiles until no new tile can be found.  A tile is revealed (along with its surrounding tiles if it is surrounded completely by empty tiles.
 function calcRevealAreas(tileInd, mineM, xT, yT) {
-
   tile = mineM[tileInd]
   mineM[tileInd].reveal = true
 
@@ -253,14 +265,13 @@ function calcRevealAreas(tileInd, mineM, xT, yT) {
       if (mineM[(b[1]-1) * xT + b[0] - 1].reveal) {
         return mineM
       } else {
-        calcRevealAreas((b[1]-1) * xT + b[0] - 1, mineM, xT, yT)
+        return calcRevealAreas((b[1]-1) * xT + b[0] - 1, mineM, xT, yT)
       }
     })
   } else {
     return mineM
   }
 }
-calcRevealAreas(getRandomInt(0, xTiles*yTiles-1), test, xTiles, yTiles)
 
 // FUNCTION: Generate random matrix of mines for a given number of tiles in the x and y direction and a number of mines.  The resulting mine map is returned in the form of a dictionary with each tile having an x and y location and a number indicating the number of surrounding mines.  If the tile itself is a mine then the number returned is zero.
 function getMineMap(xT, yT, nM) {
@@ -358,10 +369,17 @@ function convertToInd(xyCoord, xT, yT) {
 
 // TILE UPDATE FUNCTION: Updates the tile grid based on the data
 function updateTileGrid(data) {
-  var tiles = mineTiles.selectAll('rect')
+  var tiles = minefield.selectAll('rect')
     .data(data)
+
+  tiles
     .enter()
     .append('rect')
+
+  tiles
+    .attr('class', function(d) {
+      return (d.reveal ? 'tileRevealed' : 'tile')
+    })
     .attr('width', tileSize)
     .attr('height', tileSize)
     .attr('x', function(d) {
@@ -370,11 +388,61 @@ function updateTileGrid(data) {
     .attr('y', function(d) {
       return d.y * tileSize;
     })
-    .attr('class', 'tile')
     .on('mouseover', function(d) console.log(d))
     .on('click', function(d, i) {
-      newMineMat = leftClickLogic(i, test, xTiles, yTiles)
-      updateTileGrid(newMineMat)
-    })
+      data.forEach(function(a) {
+        if (a.index-1 === i && !a.reveal) {
+          a.reveal = true
+        }
+      })
+      var tile = d3.select(this);
+      tile.attr('class', 'tileRevealed')
+      leftClickLogic(i, data, gameOver, xTiles, yTiles)
+      updateTileGrid(data)
+      updateTextGrid(data)
+    });
 
+    // if data is removed
+    tiles.exit().remove();
+}
+
+// TILE TEXT UPDATE FUNCTION: Updates the text on the tile grid based on the data
+function updateTextGrid(data) {
+  var mineText = minefield.selectAll('text')
+    .data(data)
+
+  mineText
+    .enter()
+    .append('text')
+
+  mineText
+    .each(function(d, i) {
+        d3.select(this).append("tspan")
+          .text(function(d) {return d.reveal ? (d.value == 0 ? null : d.value) : null})
+          .attr("x", d.x * tileSize + tileSize/2)
+          .attr("y", d.y * tileSize + tileSize*2/3)
+          .attr("fill", function(d){
+            return d.value > 0 ? mineCols[d.value-1] :
+              (d.value < 0 ? 'pink' : 'white')
+          })
+          .attr("font-family", "courier")
+          .attr("font-size", "14px")
+          .attr("font-weight", "bold")
+          .attr("text-anchor","middle")
+    })
+    .on('click', function(d, i) {
+      data.forEach(function(a) {
+        if (a.index-1 === i && !a.reveal) {
+          a.reveal = true
+        }
+      })
+      var tile = d3.select(this);
+      tile.attr('class', 'tileRevealed')
+      leftClickLogic(i, data, gameOver, xTiles, yTiles)
+      updateTileGrid(data)
+      updateTextGrid(data)
+    });
+
+    // exit
+    mineText.exit().remove();
 }
