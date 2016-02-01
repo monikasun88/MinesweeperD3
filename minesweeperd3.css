@@ -5,7 +5,7 @@
 
 .tile {
   stroke: black;
-  fill: white;
+  fill: lightgrey;
 }
 
 .tileRevealed {

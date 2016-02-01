@@ -42,15 +42,39 @@ mineCols = ['#0100FE', '017F07', '#FE0000', '#010080', '#810102', '#008081', '#0
 // Add input fields if selected difficulty is custom to the div #customgameopts
 
 // Mine counter
-mineCounter = 10
-xTiles = 9
-yTiles = 9
+var selDiff = d3.select("#difficulty").node().value
+for (d = 0; d < difficulties.length; d++) {
+  if (difficulties[d].level === selDiff) {
+    var diffSelDict = difficulties[d]
+  }
+}
+var mineCounter = diffSelDict.nMines
+var xTiles = diffSelDict.xTileN
+var yTiles = diffSelDict.yTileN
 gameOver = false
 
 // Time counter
 
 // Mine field plotting logic, added to #minefield
-test = getMineMap(xTiles, yTiles, mineCounter)
+var test = getMineMap(xTiles, yTiles, mineCounter)
+
+d3.select("#difficulty")
+  .on('change', function() {
+    diffSelect = d3.select(this).property('value')
+    for (d = 0; d < difficulties.length; d++) {
+      if (difficulties[d].level === diffSelect) {
+        var diffSelDict = difficulties[d]
+      }
+    }
+    test = getMineMap(diffSelDict.xTileN, diffSelDict.yTileN, diffSelDict.nMines)
+    console.log(test)
+    updateTileGrid(test)
+    updateTextGrid(test)
+    var mineBorder = d3.select('svg')
+    mineBorder.attr('width', tileSize * (diffSelDict.xTileN + 2))
+    mineBorder.attr('height', tileSize * (diffSelDict.yTileN + 2))
+  });
+
 var minefield = d3.select("#minefield")
   .append("svg")
   .attr("width", tileSize * (xTiles + 2))
@@ -111,13 +135,13 @@ mineText.append("text")
     test.forEach(function(a) {
       if (a.index-1 === i && !a.reveal) {
         a.reveal = true
+        var tile = d3.select(this);
+        tile.attr('class', 'tileRevealed')
+        leftClickLogic(i, test, gameOver, xTiles, yTiles)
+        updateTextGrid(test)
+        updateTileGrid(test)
       }
     })
-    var tile = d3.select(this);
-    tile.attr('class', 'tileRevealed')
-    leftClickLogic(i, test, gameOver, xTiles, yTiles)
-    updateTileGrid(test)
-    updateTextGrid(test)
   });
 
 // Left click logic
@@ -408,16 +432,16 @@ function updateTileGrid(data) {
 
 // TILE TEXT UPDATE FUNCTION: Updates the text on the tile grid based on the data
 function updateTextGrid(data) {
-  var mineText = minefield.selectAll('text')
+  var mineText = minefield.selectAll('tspan')
     .data(data)
 
   mineText
     .enter()
-    .append('text')
+    .append('tspan')
 
   mineText
     .each(function(d, i) {
-        d3.select(this).append("tspan")
+        d3.select(this)
           .text(function(d) {return d.reveal ? (d.value == 0 ? null : d.value) : null})
           .attr("x", d.x * tileSize + tileSize/2)
           .attr("y", d.y * tileSize + tileSize*2/3)
@@ -434,13 +458,13 @@ function updateTextGrid(data) {
       data.forEach(function(a) {
         if (a.index-1 === i && !a.reveal) {
           a.reveal = true
+          var tile = d3.select(this);
+          tile.attr('class', 'tileRevealed')
+          leftClickLogic(i, data, gameOver, xTiles, yTiles)
+          updateTextGrid(data)
+          updateTileGrid(data)
         }
       })
-      var tile = d3.select(this);
-      tile.attr('class', 'tileRevealed')
-      leftClickLogic(i, data, gameOver, xTiles, yTiles)
-      updateTileGrid(data)
-      updateTextGrid(data)
     });
 
     // exit
